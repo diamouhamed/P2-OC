@@ -1,5 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
+import csv
 
 #liste: liens des catégories.
 categs_links = []
@@ -22,6 +23,14 @@ for ultag in soup.find_all('ul', class_='nav nav-list'):
         #Noms catégories/
         category = a.text
         categs_names.append(category.replace("\n","").replace(" ",""))
-        
-print(categs_links)
-print(categs_names)
+#Suppression 1ére ligne (books)
+del categs_links[0]
+del categs_names[0]
+
+#Creation fichier CSV avec les noms des catégories + liens des catégories
+en_tete = ['name_of_categs', 'links_of_categs']
+with open('category_books_urls.csv', 'w') as csv_file:
+    writer = csv.writer(csv_file, delimiter=',')
+    writer.writerow(en_tete)
+    for category, link in zip(categs_names, categs_links):
+        writer.writerow([category, link])
