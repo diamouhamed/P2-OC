@@ -2,7 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 import csv
 
-def categ_name_links(url):
+def category_names_links(url):
     #liste: liens des catégories.
     categs_links = []
     #liste: noms des catégories.
@@ -33,11 +33,12 @@ def categ_name_links(url):
         writer = csv.writer(csv_file, delimiter=',')
         writer.writerow(en_tete)
         for category, link in zip(categs_names, categs_links):
-            writer.writerow([category, link])
-            
+            writer.writerow([category, link])  
+    return
+
 def main():
     url = "https://books.toscrape.com/"
-    categs = categ_name_links(url)
+    categs = category_names_links(url)
     
 if __name__ == '__main__':
     main()
