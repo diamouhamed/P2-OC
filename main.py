@@ -1,5 +1,7 @@
+from urllib import response
 import requests
 from bs4 import BeautifulSoup
+import pandas as pd
 
 def get_categories(url):
     """return categories names & links"""
@@ -26,16 +28,37 @@ def get_categories(url):
     
     del categories[0]
     return categories
- 
+
+def get_books_urls(category_url):
+    """return les urls des livres d'une catégorie"""
+    books_url = []
+    response = requests.get(category_url)
+    soup = BeautifulSoup(response.content, "html.parser")
+    print(soup)
+    return books_url
+
+def get_book_data(book_url):
+    """return un dictionnaire contenant les informations d'un livre"""
+    
+    
+    
+
 def main():
     url = "https://books.toscrape.com/"
-    
-    categories_url = "https://books.toscrape.com/catalogue/category/books/travel_2/index.html"
-    
+
     categories = get_categories(url)
     
-    for x in categories:
-        print(x["link"])
-    
+    for category in categories:
+        books_urls = get_books_urls(category["link"])
+        print(books_urls)
+        
+        books_data = []
+        for book_url in books_urls:
+            book_data = get_book_data(book_url)
+            books_data.append(book_data)
+        #fonction de sauvegarde csv save data = books data.
+        #recuperer des images.
+        return
+        
 if __name__ == '__main__':
     main()
