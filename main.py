@@ -1,15 +1,13 @@
 import requests
 from bs4 import BeautifulSoup
+import csv
 
 def get_categories(url):
     """return categories names & links"""
     categories = []
-
     #Extraction of page.
     response = requests.get(url)
     soup = BeautifulSoup(response.content, "html.parser")
-    #print(soup)
-
     #Récupérer les liens et noms des catégories.
     for ultag in soup.find_all('ul', class_='nav nav-list'):
         for litag in ultag.find_all('li'):    
@@ -20,10 +18,10 @@ def get_categories(url):
             #Noms catégories/
             category = a.text
             name = (category.replace("\n","").replace(" ",""))
-            
+            #création dictionnaire contenant name et link des catégories
             categs_dict = {"name" : name, "link" : link}
             categories.append(categs_dict)
-    
+    #Supreession Ligne 1
     del categories[0]
     return categories
 
@@ -40,21 +38,20 @@ def get_books_urls(category_url):
             a = h3.find('a')
             link = a['href']
             books_url.append(category_url.replace("/category/books","") + link)
-    
-    return(books_url)
+    return books_url
 
 def get_book_data(url):
     """return un dictionnaire contenant les informations d'un livre"""
 
     response = requests.get(url)
     soup = BeautifulSoup(response.content, "html.parser")
-    
+    #Récupération Title
     title = soup.find("h1").text
-    
+    #Récupération Price Including Tax
     price_including_tax = soup.find("th", text="Price (incl. tax)").find_next_sibling("td").string
-    
+    #Récupération Price Encluding Tax
     price_excluding_tax = soup.find("th", text="Price (excl. tax)").find_next_sibling("td").string
-    
+    #Récupération Availability
     availability = soup.select('p.availability.instock')
     if availability:
         availability = availability[0].text
@@ -63,7 +60,7 @@ def get_book_data(url):
         availability = int(availability)
     else:
         availability = 0 
-    
+    #Récupération Review_Rating
     review_rating = soup.find('p', {"class": "star-rating"})
     if review_rating.has_attr('class'):
         review_rating = review_rating["class"][1]
@@ -81,20 +78,21 @@ def get_book_data(url):
             review_rating = 0
     else:
         review_rating = 0
-
+    #Récupération Category
     category = soup.find("li").find_next_sibling("li").find_next_sibling("li").text.strip()
-    
+    #Récupération Product Description
     product_description = soup.find("div", id="product_description")
     if product_description:
         product_description = soup.find("div", id="product_description").find_next_sibling("p").text
-        
-    book_data = {"title": title,"price_including_tax": price_including_tax, "price_excluding_tax": price_excluding_tax,"availability": availability, "review_rating": review_rating, "category":category, "product_description": product_description} 
+    
+    #Creation d'un dictionnaire avec toutes les informations des livres    
+    book_data = {"title": title, "price_including_tax": price_including_tax, "price_excluding_tax": price_excluding_tax,"availability": availability, "review_rating": review_rating, "category":category, "product_description": product_description} 
     
     return book_data
 
 def main():
+    """Fonction principale"""
     url = "https://books.toscrape.com/"
-
     categories = get_categories(url)
     
     for category in categories:
@@ -105,8 +103,13 @@ def main():
         for book_url in books_urls_category:
             book_data = get_book_data(book_url)
             books_data.append(book_data)
-            print(books_data)
+        
+        keys = books_data[0].keys()
+        with open('books_infos.csv', 'w', newline='') as output_file:
+            dict_writer = csv.DictWriter(output_file, keys)
+            dict_writer.writeheader()
+            dict_writer.writerows(books_data)
         return
-    
+
 if __name__ == '__main__':
     main()
