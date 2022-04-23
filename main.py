@@ -45,6 +45,8 @@ def get_book_data(url):
 
     response = requests.get(url)
     soup = BeautifulSoup(response.content, "html.parser")
+    #Récupération Product Page
+    product_page = url
     #Récupération Title
     title = soup.find("h1").text
     #Récupération Price Including Tax
@@ -60,7 +62,7 @@ def get_book_data(url):
         availability = int(availability)
     else:
         availability = 0 
-    #Récupération Review_Rating
+    #Récupération Review Rating
     review_rating = soup.find('p', {"class": "star-rating"})
     if review_rating.has_attr('class'):
         review_rating = review_rating["class"][1]
@@ -86,7 +88,7 @@ def get_book_data(url):
         product_description = soup.find("div", id="product_description").find_next_sibling("p").text
     
     #Creation d'un dictionnaire avec toutes les informations des livres    
-    book_data = {"title": title, "price_including_tax": price_including_tax, "price_excluding_tax": price_excluding_tax,"availability": availability, "review_rating": review_rating, "category":category, "product_description": product_description} 
+    book_data = {"title": title, "price_including_tax": price_including_tax, "price_excluding_tax": price_excluding_tax,"availability": availability, "review_rating": review_rating, "category":category, "product_description": product_description, "product_page": product_page} 
     
     return book_data
 
@@ -105,7 +107,7 @@ def main():
             books_data.append(book_data)
         
         keys = books_data[0].keys()
-        with open('books_infos.csv', 'w', newline='') as output_file:
+        with open('books_infos.csv', 'w', newline='', encoding="utf-8") as output_file:
             dict_writer = csv.DictWriter(output_file, keys)
             dict_writer.writeheader()
             dict_writer.writerows(books_data)
