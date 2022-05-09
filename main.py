@@ -2,6 +2,8 @@ import requests
 from bs4 import BeautifulSoup
 import csv
 from pathlib import Path
+from slugify import slugify
+
 
 def get_categories(url):
     """return categories names & links"""
@@ -29,8 +31,8 @@ def get_categories(url):
 def get_books_urls(category_url):
     """return les urls des livres d'une catégorie"""
     url_category = category_url
+    books_url = []
     while True:
-        books_url = []
         response = requests.get(url_category)
         soup = BeautifulSoup(response.content, "html.parser")
         #Find all page in each category.
@@ -99,9 +101,10 @@ def get_book_data(url):
     product_description = soup.find("div", id="product_description")
     if product_description:
         product_description = soup.find("div", id="product_description").find_next_sibling("p").text
-    
+    #Ajout du nom du fichier image (avec chemin) dans le csv.
+    file_image = f"book_data/image/{category}/{slugify(title)}/jpeg"
     #Creation d'un dictionnaire avec toutes les informations des livres    
-    book_data = {"title": title,"upc": upc, "price_including_tax": price_including_tax, "price_excluding_tax": price_excluding_tax,"availability": availability, "review_rating": review_rating, "category": category, "product_description": product_description,"image_url": image_url, "book_url": book_url} 
+    book_data = {"title": title,"upc": upc, "price_including_tax": price_including_tax, "price_excluding_tax": price_excluding_tax,"availability": availability, "review_rating": review_rating, "category": category, "product_description": product_description,"image_url": image_url, "book_url": book_url, "file_image": file_image} 
     
     return book_data
 
@@ -130,7 +133,7 @@ def main():
             dict_writer.writerows(books_data)
         
         loop += 1 
-        if loop > 2:
+        if loop > 3:
             return
 
 if __name__ == '__main__':
