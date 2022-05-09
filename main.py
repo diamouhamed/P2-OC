@@ -4,9 +4,9 @@ import csv
 from pathlib import Path
 from slugify import slugify
 
-
 def get_categories(url):
     """return categories names & links"""
+    print(f"traitement du site {url}")
     categories = []
     #Extraction of page.
     response = requests.get(url)
@@ -30,6 +30,7 @@ def get_categories(url):
 
 def get_books_urls(category_url):
     """return les urls des livres d'une catégorie"""
+    print(f"traitement url {category_url}")
     url_category = category_url
     books_url = []
     while True:
@@ -42,8 +43,9 @@ def get_books_urls(category_url):
             link = a['href']
             books_url.append(category_url.replace("/category/books","") + link)
         #Find the next page to scrape in the pagination.
+        print(f"traitement pagination {url_category}")
         next_page_element = soup.select_one('li.next > a')
-        print(next_page_element)
+        
         if next_page_element:
             next_page_url = next_page_element.get('href')
             url_category = category_url.replace("index.html", next_page_url)
@@ -53,6 +55,7 @@ def get_books_urls(category_url):
 
 def get_book_data(url):
     """return un dictionnaire contenant les informations d'un livre"""
+
     response = requests.get(url)
     soup = BeautifulSoup(response.content, "html.parser")
     #Récupération Product Page
@@ -106,34 +109,48 @@ def get_book_data(url):
     #Creation d'un dictionnaire avec toutes les informations des livres    
     book_data = {"title": title,"upc": upc, "price_including_tax": price_including_tax, "price_excluding_tax": price_excluding_tax,"availability": availability, "review_rating": review_rating, "category": category, "product_description": product_description,"image_url": image_url, "book_url": book_url, "file_image": file_image} 
     
-    return book_data
+    return book_data 
 
+def writting_csv_data(books_data):
+    print("ajout au fichier csv")
+    
+    category_name = books_data[0].get("category")
+    DATA_CSV_DIR = "book_data/csv"
+    Path(DATA_CSV_DIR).mkdir(parents=True, exist_ok=True)
+    
+    keys = books_data[0].keys()
+    with open(f"{DATA_CSV_DIR}/{category_name}.csv", 'w', newline='', encoding="utf-8") as output_file:
+        dict_writer = csv.DictWriter(output_file, keys)
+        dict_writer.writeheader()
+        dict_writer.writerows(books_data)
+
+def save_img(img_url):
+    DATA_IMG_DIR = "book_data/img"
+    Path(DATA_IMG_DIR).mkdir(parents=True, exist_ok=True)
+    
+    response = requests.get(img_url)
+    with open(f"{DATA_IMG_DIR}/{img_url}.csv", 'r', newline='', encoding="utf-8") as output_file:
+        img_url.save('sauvegarde/png_version.png', 'png')
+     
 def main():
     """Fonction principale"""
     url = "https://books.toscrape.com/"
     categories = get_categories(url)
     
-    DATA_CSV_DIR = "book_data/csv"
-    Path(DATA_CSV_DIR).mkdir(parents=True, exist_ok=True)
-    
     loop = 0
     for category in categories:
+        #print("traitement liens catégories")
         books_urls_category = get_books_urls(category["link"])
-        #print(books_urls_category)
         
         books_data = []
         for book_url in books_urls_category:
             book_data = get_book_data(book_url)
             books_data.append(book_data)
         
-        keys = books_data[0].keys()
-        with open(f"{DATA_CSV_DIR}/{category['name']}.csv", 'w', newline='', encoding="utf-8") as output_file:
-            dict_writer = csv.DictWriter(output_file, keys)
-            dict_writer.writeheader()
-            dict_writer.writerows(books_data)
+        writting_csv_data(books_data)
         
         loop += 1 
-        if loop > 3:
+        if loop > 1:
             return
 
 if __name__ == '__main__':
