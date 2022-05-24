@@ -1,3 +1,7 @@
+""" Utilisez les bases de Python pour l'analyse de marché - Use Python basics for market analysis |           OPENCLASSROMS
+
+Système en version bêta pour suivre les prix des livres chez Books to Scrape, un revendeur de livres en ligne. En pratique il s'agit simplement d'une application exécutable à la demande visant à récupérer les informations {"title", "upc", "price_including_tax", "price_excluding_tax", "availability", "review_rating", "category", "product_description", "image_url", "book_url", "file_image"} ainsi que les images des livres au moment de son exécution. """
+
 import requests
 from bs4 import BeautifulSoup
 import csv
@@ -26,7 +30,7 @@ def get_categories(url):
             link = url + link
             #Nom catégories/
             category = a.text
-            name = slugify(category.replace("\n","").replace(" ",""))
+            name = slugify(category)
             #Création d'un dictionnaire contenant le nom et le lien de la catégorie parcourue
             categs_dict = {"name" : name, "link" : link}
             categories.append(categs_dict)
@@ -113,7 +117,7 @@ def get_book_data(url):
     if product_description:
         product_description = soup.find("div", id="product_description").find_next_sibling("p").text #Récupération Product Description
     
-    file_image = f"{DATA_IMG_DIR}{category}/{slugify(title)}.jpeg"  #Récupération Chemin d'accés image
+    file_image = f"{DATA_IMG_DIR}{slugify(category)}/{slugify(title)}.jpeg"  #Récupération Chemin d'accés image
     
     #Creation d'un dictionnaire avec toutes les informations des livres    
     book_data = {"title": title,"upc": upc, "price_including_tax": price_including_tax, "price_excluding_tax": price_excluding_tax,"availability": availability, "review_rating": review_rating, "category": category, "product_description": product_description,"image_url": image_url, "book_url": book_url, "file_image": file_image} 
@@ -144,7 +148,6 @@ def main():
     url = "https://books.toscrape.com/"
     categories = get_categories(url)
 
-    loop = 0
     for category in categories:
         print(f"Processing category {category['name'].upper()}")
         books_urls_category = get_books_urls(category["link"])
@@ -161,10 +164,16 @@ def main():
         print(f"Download {category['name'].upper()}'S images in book_data ")
         for book in tqdm(books_data):
             save_image(book["image_url"], book["file_image"])
-               
-        loop += 1 
-        if loop > 1:
-            return
+            
+    return
 
 if __name__ == '__main__':
     main()
+    
+"""
+Merci d'avoir pris le temps de me lire :)
+Toute contribution est la bienvenue.
+
+@DiaMouhamed
+@OlivierMajchrzak
+"""
