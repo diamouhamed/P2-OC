@@ -7,11 +7,9 @@ from bs4 import BeautifulSoup
 import csv
 from pathlib import Path
 from slugify import slugify
-import time
 from tqdm import tqdm
 
 DATA_IMG_DIR = "book_data/IMAGES/"
-time.sleep(0.01)
     
 def get_categories(url):
     """return liste [noms et liens de chaque catégorie]"""

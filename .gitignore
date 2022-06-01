@@ -3,6 +3,10 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# Book_data foder
+book_data/
+.book_data/
+
 # C extensions
 *.so
 
