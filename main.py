@@ -7,7 +7,7 @@ from bs4 import BeautifulSoup
 import csv
 from pathlib import Path
 from slugify import slugify
-from tqdm import tqdm
+from tqdm import tqdm 
 
 DATA_IMG_DIR = "book_data/IMAGES/"
     
