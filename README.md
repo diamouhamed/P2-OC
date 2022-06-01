@@ -36,4 +36,4 @@ python3 ./main.py
 
 @DiaMouhamed
 <br>@OlivierMajchrzak
-<br>Licence Apache-2.0 license
+<br>Apache-2.0 license
