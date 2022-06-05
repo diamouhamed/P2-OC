@@ -32,7 +32,7 @@ pip install -r requirements.txt
 ```
 python3 ./main.py
 ```
-><span style="color: white"> Merci d'avoir pris le temps de me lire :) <br> Toute contribution est la bienvenue.
+><span style="color: white"> Merci d'avoir pris le temps de me lire :) <br>
 
 @DiaMouhamed
 <br>@OlivierMajchrzak

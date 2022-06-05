@@ -10,11 +10,12 @@ from slugify import slugify
 from tqdm import tqdm
 from sys import exit
 
+DATA_CSV_DIR = "book_data/CSV"
 DATA_IMG_DIR = "book_data/IMAGES/"
 
 def get_soup(url):
     """Return a beautiful soup object"""
-    response = requests.get(url)
+    response = requests.get(url)                                        
     soup = BeautifulSoup(response.content, "html.parser")
 
     if not response.ok:
@@ -23,13 +24,14 @@ def get_soup(url):
     return soup
 
 def get_categories(url):
-    """return liste [noms et liens de chaque catégorie]"""
+    """Return liste [noms et liens de toutes les catégories de livre]"""
     print(f" ---- strat processing website {url} ----")
+    
     categories = []
-    # Extraction de la page.
+    # Extraction de la page d'accueil.
     soup = get_soup(url)
 
-    # Boucle For pour la récupération du nom et du lien de la catégorie parcourue
+    # Boucle For pour la récupération des noms et liens des catégories des livres à partir du SideBar.
     for ultag in soup.find_all("ul", class_="nav nav-list"):
         for litag in ultag.find_all("li"):
             a = litag.find("a")
@@ -39,30 +41,30 @@ def get_categories(url):
             # Nom catégories/
             category = a.text
             name = slugify(category)
-            # Création d'un dictionnaire contenant le nom et le lien de la catégorie parcourue
+            # Création d'un dictionnaire contenant le nom et le lien de toutes les catégories.
             categs_dict = {"name": name, "link": link}
             categories.append(categs_dict)
-
-    del categories[0]  # Supression du premier élément de la liste [Books]
-    return categories  # Liste contenant les noms et liens de chaque catégories
+                
+    del categories[0]  # Supression du premier élément de la liste.
+    return categories  # Noms et liens de toutes les catégories.
 
 def get_books_urls(category_url):
-    """return les urls des livres d'une catégorie"""
+    """return les urls de tous les livres d'une catégorie"""
     url_category = category_url
     books_url = []
 
-    # Boucle While pour parcourir l'url de chaque catégorie
+    # Boucle While pour parcourir les urls de tous les livres d'une catégorie
     while True:
         soup = get_soup(url_category)
 
-        # Boucle For pour parcourir tous les livres d'une catégorie
+        # Boucle For pour extraire tous les liens des livres
         h3s = soup.find_all("h3")
         for h3 in h3s:
             a = h3.find("a")
             link = a["href"]
             books_url.append(category_url.replace("/category/books", "") + link)
 
-        # Pagination
+        # Pagination si existante.
         next_page_element = soup.select_one("li.next > a")
         if next_page_element:
             next_page_url = next_page_element.get("href")
@@ -75,23 +77,23 @@ def get_books_urls(category_url):
 def get_book_data(url):
     """return un dictionnaire contenant les informations d'un livre"""
     soup = get_soup(url)
+    
+    # Récupération Product Page
+    book_url = url  
 
-    book_url = url  # Récupération Product Page
+    # Récupération Title
+    title = soup.find("h1").text  
 
-    title = soup.find("h1").text  # Récupération Title
+    # Récupération UPC
+    upc = soup.find("th", string="UPC").find_next_sibling("td").string
 
-    upc = (
-        soup.find("th", string="UPC").find_next_sibling("td").string
-    )  # Récupération UPC
+    # Récupération Price Including Tax
+    price_including_tax = soup.find("th", text="Price (incl. tax)").find_next_sibling("td").string
 
-    price_including_tax = (
-        soup.find("th", text="Price (incl. tax)").find_next_sibling("td").string
-    )  # Récupération Price Including Tax
-
-    price_excluding_tax = (
-        soup.find("th", text="Price (excl. tax)").find_next_sibling("td").string
-    )  # Récupération Price Encluding Tax
-
+    # Récupération Price Excluding Tax
+    price_excluding_tax = soup.find("th", text="Price (excl. tax)").find_next_sibling("td").string
+    
+    # Récupération Availability
     availability = soup.select("p.availability.instock")
     if availability:
         availability = availability[0].text
@@ -99,33 +101,32 @@ def get_book_data(url):
         availability = availability.replace(" available)", "")
         availability = int(availability)
     else:
-        availability = 0  # Récupération Availability
-
+        availability = 0
+        
+    # Récupération Review Rating
     review_rating = soup.find("p", {"class": "star-rating"})
     if review_rating.has_attr("class"):
         review_rating = review_rating["class"][1]
         review_rating = transform_rating_to_number(review_rating)
     else:
-        review_rating = 0  # Récupération Review Rating
-
-    category = (
-        soup.find("li").find_next_sibling("li").find_next_sibling("li").text.strip()
-    )  # Récupération Category
-
+        review_rating = 0
+    
+    # Récupération Category
+    category = soup.find("li").find_next_sibling("li").find_next_sibling("li").text.strip()
+    
+    # Récupération Image Url
     image_url = soup.find("div", {"id": "product_gallery"})
-    image_url = (
-        "http://books.toscrape.com/" + soup.find("img")["src"]
-    )  # Récupération Image Url
+    image_url = "http://books.toscrape.com/" + soup.find("img")["src"]
 
+    # Récupération Product Description
     product_description = soup.find("div", id="product_description")
     if product_description:
-        product_description = (
-            soup.find("div", id="product_description").find_next_sibling("p").text
-        )  # Récupération Product Description
+        product_description = soup.find("div", id="product_description").find_next_sibling("p").text
+        
+    # Récupération Chemin d'accés image
+    file_image = f"{DATA_IMG_DIR}{slugify(category)}/{slugify(title)}.jpeg" 
 
-    file_image = f"{DATA_IMG_DIR}{slugify(category)}/{slugify(title)}.jpeg"  # Récupération Chemin d'accés image
-
-    # Creation d'un dictionnaire avec toutes les informations des livres
+    #Structuration d'un dictionnaire avec toutes les données des livres
     book_data = {
         "title": title,
         "upc": upc,
@@ -139,8 +140,7 @@ def get_book_data(url):
         "book_url": book_url,
         "file_image": file_image,
     }
-
-    return book_data  # dictionnaire avec toutes les informations des livres
+    return book_data
 
 def transform_rating_to_number(review_rating):
     """Retourne la note transformée en nombre"""
@@ -161,13 +161,11 @@ def transform_rating_to_number(review_rating):
 def writting_csv_data(books_data):
     """écriture du fichier csv"""
     category_name = books_data[0].get("category")
-    DATA_CSV_DIR = "book_data/CSV"
+
     Path(DATA_CSV_DIR).mkdir(parents=True, exist_ok=True)
 
     keys = books_data[0].keys()
-    with open(
-        f"{DATA_CSV_DIR}/{category_name}.csv", "w", newline="", encoding="utf-8"
-    ) as output_file:
+    with open (f"{DATA_CSV_DIR}/{category_name}.csv", "w", newline="", encoding="utf-8") as output_file:
         dict_writer = csv.DictWriter(output_file, keys)
         dict_writer.writeheader()
         dict_writer.writerows(books_data)
